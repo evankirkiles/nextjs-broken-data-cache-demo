@@ -21,3 +21,11 @@
 .button:hover {
   background-color: #303030;
 }
+
+.nextsection {
+  margin-top: 1em;
+}
+
+.list {
+  opacity: 0.5;
+}
