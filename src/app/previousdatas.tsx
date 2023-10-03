@@ -24,9 +24,10 @@ export default function PreviousData() {
   );
   // on load, load in curr-data to localstorage
   useEffect(() => {
+    const hash = document.querySelector("#curr-hash")?.innerHTML;
     const data = document.querySelector("#curr-data")?.innerHTML;
     if (data) {
-      addData(data);
+      addData(`${hash} ~ ${data}`);
     }
   }, []);
 
@@ -35,8 +36,28 @@ export default function PreviousData() {
   }, []);
 
   return (
-    <ol className={s.list}>
-      {show && [...data].map((date) => <li key={date}>{date}</li>)}
-    </ol>
+    <table className={s.table}>
+      <thead>
+        <tr>
+          <th>Hash</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {show &&
+          [...data].reverse().map((date) => {
+            const [hash, time] = date.split(" ~ ");
+            return (
+              <tr key={date}>
+                <td>{hash}</td>
+                <td>{time}</td>
+              </tr>
+            );
+          })}
+      </tbody>
+    </table>
+    // <ol className={s.list}>
+    //   {show && [...data].map((date) => <li key={date}>{date}</li>)}
+    // </ol>
   );
 }

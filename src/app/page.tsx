@@ -2,6 +2,8 @@ import styles from "./page.module.css";
 import RevalidateButton from "@/app/revalidatebutton";
 import PreviousData from "@/app/previousdatas";
 
+const currHash = "abc123";
+
 export default async function Home() {
   const currTime = await fetch(
     "https://worldtimeapi.org/api/timezone/America/New_York",
@@ -12,6 +14,7 @@ export default async function Home() {
 
   return (
     <main className={styles.main}>
+      <h1 id="curr-hash">abc123</h1>
       <p>Data last fetched:</p>
       <code id="curr-data">{output}</code>
       <RevalidateButton />

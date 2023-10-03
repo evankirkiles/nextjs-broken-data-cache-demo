@@ -7,6 +7,7 @@ export default function RevalidateButton() {
       className={s.button}
       onClick={() => {
         fetch("/api/revalidate", { method: "POST" });
+        setTimeout(() => location.reload(), 1000);
       }}
     >
       Revalidate

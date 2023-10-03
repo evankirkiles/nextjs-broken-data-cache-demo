@@ -26,6 +26,11 @@
   margin-top: 1em;
 }
 
-.list {
+.table {
+  text-align: left;
   opacity: 0.5;
+}
+
+.table td {
+  padding-right: 0.5em;
 }
