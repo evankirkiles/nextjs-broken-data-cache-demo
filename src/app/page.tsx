@@ -1,5 +1,6 @@
 import Image from "next/image";
 import styles from "./page.module.css";
+import RevalidateButton from "@/app/revalidatebutton";
 
 export default async function Home() {
   const currTime = await fetch(
@@ -13,6 +14,7 @@ export default async function Home() {
     <main className={styles.main}>
       <p>Data last fetched:</p>
       <code>{output}</code>
+      <RevalidateButton />
     </main>
   );
 }

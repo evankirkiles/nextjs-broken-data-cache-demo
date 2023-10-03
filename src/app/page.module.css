@@ -7,3 +7,17 @@
   padding: 6rem;
   min-height: 100vh;
 }
+
+.button {
+  border: 1px solid white;
+  padding: 1em 2em;
+  display: block;
+  background-color: black;
+  color: white;
+  cursor: pointer;
+  margin-top: 0.5em;
+}
+
+.button:hover {
+  background-color: #303030;
+}
