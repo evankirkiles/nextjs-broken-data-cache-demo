@@ -1,6 +1,7 @@
-const FetchCache = require("next/dist/server/lib/incremental-cache/fetch-cache");
+const FetchCache =
+  require("next/dist/server/lib/incremental-cache/fetch-cache").default;
 
-export default class CacheHandler extends FetchCache {
+module.exports = class CacheHandler extends FetchCache {
   constructor(...args) {
     super(...args);
     const { _requestHeaders } = args[0];
@@ -18,4 +19,4 @@ export default class CacheHandler extends FetchCache {
       }
     } catch (e) {}
   }
-}
+};
