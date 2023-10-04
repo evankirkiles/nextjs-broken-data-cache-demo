@@ -11,6 +11,7 @@ export default async function Home() {
   );
   const data = await currTime.json();
   const output = new Date(data.datetime).toLocaleString();
+  console.log(`SUSPENSE_CACHE_URL: ${process.env.SUSPENSE_CACHE_URL}`);
 
   return (
     <main className={styles.main}>
