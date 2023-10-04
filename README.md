@@ -9,23 +9,37 @@ Essentially, the Vercel build pipeline needs three environment variables to be s
 
 We need to do this dynamically because the auth token Vercel uses, `SUSPENSE_CACHE_AUTH_TOKEN`, is short-lived and created per-route handler. So we can hijack an auth token created for a route handler to authorize the build pipeline to connect to Vercel's Data Cache.
 
-Before starting, make sure you add a `BUILD_SECRET` environment variable to your Vercel project. If you want to make sure this is working, also set `NEXT_PRIVATE_DEBUG_CACHE=1` to view cache debug logs.
+## 0. Configuration
+
+You'll need to set two environment variables on your project, and an optional third:
+
+| Variable | Description | Example |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | The protocol and domain (without the endpoint) under which your revalidation route handler calls are performed. If you use a custom domain for your project, _it will be that_. You can't use `VERCEL_URL` because it points to the latest deployment and, as such, won't have a route handler at the time of build. You can't use `VERCEL_BRANCH_URL` because the auth token JWT needs to contain inside the same domain as your ISR route handler that performs `revalidateTag`, even if they point to the same deployment—I don't know why, and this seems like it might be something that should be looked at by Vercel.  | https://my-project-name.vercel.app |
+| `BUILD_SECRET` | A secret used to protect the route handler which dynamically retrieves `SUSPENSE_CACHE_` values. | Use bash's `uuidgen` for a simple UUID. |
+| `NEXT_PRIVATE_DEBUG_CACHE` | An optional environment variable to turn on Next.js incremental cache debug logs. This allows you to see if your FetchCache is correctly being used in the build pipeline. | `1` |
 
 ## 1. Route Handler
 
-We can read the environment variable values from the global `globalThis.__incrementalCache` object that Next.js fortunately populates and exposes. If this wasn't globally-accessible, then it'd be much harder to find the cache endpoint and credentials. The entire route handler (with a secret for protection) looks like:
+We can read the environment variable values from the global `globalThis.__incrementalCache` object that Next.js fortunately populates and exposes within route handlers. If this wasn't globally-accessible, then it'd be much harder to find the cache endpoint and credentials. The entire route handler (with a secret for protection) looks like:
 
 ```typescript
 // src/app/api/get-sc-creds/route.ts
 import { NextRequest, NextResponse } from "next/server";
+// cache types for intellisense
+import FetchCache from "next/dist/server/lib/incremental-cache/fetch-cache";
+import type { IncrementalCache } from "next/dist/server/lib/incremental-cache";
 
 declare global {
-  var __incrementalCache: any;
+  var __incrementalCache: IncrementalCache;
 }
 
+// Not necessarily, but to be safe and not cache secrets
 export const dynamic = "force-dynamic";
 
 export function GET(req: NextRequest) {
+
+  // validate the build secret for route protection
   const { searchParams } = req.nextUrl;
   const BUILD_SECRET = searchParams.get("BUILD_SECRET");
   if (!BUILD_SECRET || BUILD_SECRET !== process.env.BUILD_SECRET) {
@@ -33,19 +47,24 @@ export function GET(req: NextRequest) {
   }
 
   try {
+    // access the global incremental cache object, making sure its a FetchCache
     const { cacheHandler } = globalThis.__incrementalCache;
-    const endpoint = new URL(cacheHandler.cacheEndpoint);
+    if (!(cacheHandler instanceof FetchCache)) return NextResponse.json("");
+    // parse our environment variables
+    const endpoint = new URL(cacheHandler["cacheEndpoint"]);
     const SUSPENSE_CACHE_URL = endpoint.hostname;
     const SUSPENSE_CACHE_ENDPOINT = endpoint.pathname.replace("/", "");
     const SUSPENSE_CACHE_AUTH_TOKEN = cacheHandler["headers"][
       "Authorization"
     ].replace("Bearer ", "");
+    // return them in a way we can pipe directly into `$ export`
     return NextResponse.json(
       `SUSPENSE_CACHE_URL=${SUSPENSE_CACHE_URL} SUSPENSE_CACHE_ENDPOINT=${SUSPENSE_CACHE_ENDPOINT} SUSPENSE_CACHE_AUTH_TOKEN=${SUSPENSE_CACHE_AUTH_TOKEN}`
     );
   } catch (e) {}
   return NextResponse.json("");
 }
+
 ```
 
 This returns the environment variables we need, or an empty string on failure. This is important for the next step.
@@ -55,19 +74,20 @@ This returns the environment variables we need, or an empty string on failure. T
 Because the environment variables—particularly the auth token—are quite short-lived and dynamic, we read them at build time in the route handler using a simple bash script:
 
 ```bash
-get_path="http://$VERCEL_BRANCH_URL/api/get-sc-creds?BUILD_SECRET=$BUILD_SECRET"
+get_path="$NEXT_PUBLIC_SITE_URL/api/get-sc-creds?BUILD_SECRET=$BUILD_SECRET"
 response=$(curl -s $get_path)
 # If we got a valid response, then export to process
 if [[ "$response" == *"SUSPENSE_CACHE_"* ]]; then
+  echo "Got valid suspense cache credentials."
   export $(echo $response | xargs) >/dev/null 2>&1
 fi
 ```
 
-Notice that this uses the `VERCEL_BRANCH_URL` system environment variable to source which route handler's endpoint the Data Cache credentials are coming from. You can't use `VERCEL_URL`, as this will point to the latest deployment, which is the one being created in the build script. Note also that if this is the first commit on the branch or in the repo, the cURL will return a not found page and no environment variables will be set. This is actually probably fine—in the case of the first deployment on the branch or repo, there won't be a Build Cache to take stale data from, so this will use an empty filesystem cache and perform all the requests anyways.
+Note that if this is the first commit on the branch or in the repo, the cURL will return a not found page and no environment variables will be set. This is actually probably fine—in the case of the first deployment on the branch or repo, there won't be a Build Cache to take stale data from, so this will use an empty filesystem cache and perform all the requests anyways.
 
 ## 3. package.json
 
-Now, all that's needed is to source from our bash script before we build. Simply prepend the bash command to your `build` script:
+Now, all that's needed is to source the environment variables from our bash script before we build. Simply prepend the bash command to your `build` script:
 
 ```javascript
 {
