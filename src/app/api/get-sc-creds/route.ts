@@ -11,12 +11,24 @@ declare global {
   var __incrementalCache: any;
 }
 
-export function GET(req: NextRequest) {
-  console.log(__incrementalCache);
-  // const {
-  //   evan_SUSPENSE_CACHE_URL,
-  //   evan_SUSPENSE_CACHE_ENDPOINT,
-  //   evan_SUSPENSE_CACHE_AUTH_TOKEN,
-  // } = globalThis;
-  return NextResponse.json({ __incrementalCache });
+export const dynamic = "force-dynamic";
+
+export function GET() {
+  let SUSPENSE_CACHE_URL: string | null = null;
+  let SUSPENSE_CACHE_ENDPOINT: string | null = null;
+  let SUSPENSE_CACHE_AUTH_TOKEN: string | null = null;
+  try {
+    const { cacheHandler } = globalThis.__incrementalCache;
+    const endpoint = new URL(cacheHandler.cacheEndpoint);
+    SUSPENSE_CACHE_URL = endpoint.hostname;
+    SUSPENSE_CACHE_ENDPOINT = endpoint.pathname;
+    SUSPENSE_CACHE_AUTH_TOKEN = cacheHandler["headers"][
+      "Authorization"
+    ].replace("Bearer ", "");
+  } catch (e) {}
+  return NextResponse.json({
+    SUSPENSE_CACHE_URL,
+    SUSPENSE_CACHE_ENDPOINT,
+    SUSPENSE_CACHE_AUTH_TOKEN,
+  });
 }
