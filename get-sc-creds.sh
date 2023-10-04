@@ -1,1 +1,2 @@
-export $(curl -s https://nextjs-broken-data-cache-demo.vercel.app/api/get-sc-creds | xargs)
+get_path="https://$VERCEL_URL/api/get-sc-creds?BUILD_SECRET=$BUILD_SECRET"
+export $(curl -s $get_path | xargs)
