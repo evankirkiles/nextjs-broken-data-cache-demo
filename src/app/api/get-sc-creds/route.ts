@@ -21,14 +21,13 @@ export function GET() {
     const { cacheHandler } = globalThis.__incrementalCache;
     const endpoint = new URL(cacheHandler.cacheEndpoint);
     SUSPENSE_CACHE_URL = endpoint.hostname;
-    SUSPENSE_CACHE_ENDPOINT = endpoint.pathname;
+    SUSPENSE_CACHE_ENDPOINT = endpoint.pathname.replace("/", "");
     SUSPENSE_CACHE_AUTH_TOKEN = cacheHandler["headers"][
       "Authorization"
     ].replace("Bearer ", "");
+    return NextResponse.json(
+      `SUSPENSE_CACHE_URL=${SUSPENSE_CACHE_URL} SUSPENSE_CACHE_ENDPOINT=${SUSPENSE_CACHE_ENDPOINT} SUSPENSE_CACHE_AUTH_TOKEN=${SUSPENSE_CACHE_AUTH_TOKEN}`
+    );
   } catch (e) {}
-  return NextResponse.json({
-    SUSPENSE_CACHE_URL,
-    SUSPENSE_CACHE_ENDPOINT,
-    SUSPENSE_CACHE_AUTH_TOKEN,
-  });
+  return NextResponse.json("SUSPENSE_CACHE_URL=aaaa");
 }
