@@ -4,7 +4,7 @@ import FetchCache from "next/dist/server/lib/incremental-cache/fetch-cache";
 import type { IncrementalCache } from "next/dist/server/lib/incremental-cache";
 
 declare global {
-  var __incrementalCache: IncrementalCache;
+  var __incrementalCache: IncrementalCache & { cacheHandler: FetchCache };
 }
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,6 @@ export function GET(req: NextRequest) {
 
   try {
     const { cacheHandler } = globalThis.__incrementalCache;
-    if (!(cacheHandler instanceof FetchCache)) return NextResponse.json("");
     const endpoint = new URL(cacheHandler["cacheEndpoint"]);
     const SUSPENSE_CACHE_URL = endpoint.hostname;
     const SUSPENSE_CACHE_ENDPOINT = endpoint.pathname.replace("/", "");
@@ -28,6 +27,8 @@ export function GET(req: NextRequest) {
     return NextResponse.json(
       `SUSPENSE_CACHE_URL=${SUSPENSE_CACHE_URL} SUSPENSE_CACHE_ENDPOINT=${SUSPENSE_CACHE_ENDPOINT} SUSPENSE_CACHE_AUTH_TOKEN=${SUSPENSE_CACHE_AUTH_TOKEN}`
     );
-  } catch (e) {}
+  } catch (e) {
+    console.error(e);
+  }
   return NextResponse.json("");
 }
