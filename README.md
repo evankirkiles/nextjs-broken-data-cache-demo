@@ -84,3 +84,65 @@ Now, your build pipeline should be hooked into the Vercel Data Cache.
 # Conclusion
 
 Please implement something like this behavior by default in the build pipeline Vercel 😭😭😭😭
+
+
+### Did it work?
+
+If you set `NEXT_PRIVATE_DEBUG_CACHE=1` on your project, you can see if your build process is reading from the fetch cache if it says `"using fetch cache handler"`:
+
+```
+$ source ./get-sc-creds.sh; next build
+Got valid suspense cache credentials.
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+using filesystem cache handler
+using fetch cache handler
+using cache endpoint https://iad1.suspense-cache.vercel-infra.com
+using memory store for fetch cache
+   Generating static pages (0/6) ...
+using filesystem cache handler
+using fetch cache handler
+using cache endpoint https://iad1.suspense-cache.vercel-infra.com
+using memory store for fetch cache
+using filesystem cache handler
+using fetch cache handler
+using cache endpoint https://iad1.suspense-cache.vercel-infra.com
+using memory store for fetch cache
+using filesystem cache handler
+using fetch cache handler
+using cache endpoint https://iad1.suspense-cache.vercel-infra.com
+using memory store for fetch cache
+
+   Generating static pages (1/6) 
+
+   Generating static pages (2/6) 
+using filesystem cache handler
+using fetch cache handler
+using cache endpoint https://iad1.suspense-cache.vercel-infra.com
+
+   Generating static pages (4/6) 
+got fetch cache entry for c4852ff8dabbfcfd6cbcd107a08ebc216c384401e06c6180112b86088498b5ce, duration: 2481ms, size: 3, cache-state: fresh tags: time softTags: _N_T_/layout,_N_T_/page,_N_T_/
+got fetch cache entry for c4852ff8dabbfcfd6cbcd107a08ebc216c384401e06c6180112b86088498b5ce, duration: 58ms, size: 3, cache-state: fresh tags: time softTags: _N_T_/layout,_N_T_/page,_N_T_/
+
+ ✓ Generating static pages (6/6) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+Route (app)                              Size     First Load JS
+┌ ○ /                                    1.29 kB        81.7 kB
+├ ○ /_not-found                          883 B          81.3 kB
+├ λ /api/get-sc-creds                    0 B                0 B
+└ λ /api/revalidate                      0 B                0 B
++ First Load JS shared by all            80.5 kB
+  ├ chunks/864-e2ce932f5f5f70ad.js       27.5 kB
+  ├ chunks/fd9d1056-34f0535b06a5adb7.js  51 kB
+  ├ chunks/main-app-8f13c08947745519.js  234 B
+  └ chunks/webpack-0b57cc7580715949.js   1.76 kB
+λ  (Server)  server-side renders at runtime (uses getInitialProps or getServerSideProps)
+○  (Static)  automatically rendered as static HTML (uses no initial props)
+Done in 14.96s.
+```
+
+
+
