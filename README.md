@@ -9,6 +9,7 @@ Essentially, the Vercel build pipeline needs three environment variables to be s
 
 We need to do this dynamically because the auth token Vercel uses, `SUSPENSE_CACHE_AUTH_TOKEN`, is short-lived and created per-route handler. So we can hijack an auth token created for a route handler to authorize the build pipeline to connect to Vercel's Data Cache.
 
+Before starting, make sure you add a `BUILD_SECRET` environment variable to your Vercel project. If you want to make sure this is working, also set `NEXT_PRIVATE_DEBUG_CACHE=1` to view cache debug logs.
 
 ## 1. Route Handler
 
