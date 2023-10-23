@@ -69,6 +69,7 @@ This returns the environment variables we need, or an empty string on failure. T
 Because the environment variables—particularly the auth token—are quite short-lived and dynamic, we read them at build time in the route handler using a simple bash script:
 
 ```bash
+# get-sc-creds.sh
 get_path="$NEXT_PUBLIC_SITE_URL/api/get-sc-creds?BUILD_SECRET=$BUILD_SECRET"
 response=$(curl -s $get_path)
 # If we got a valid response, then export to process
